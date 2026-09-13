@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import {
   Bell,
-  BookOpen,
   CheckCircle2,
   Clock3,
   Droplets,
@@ -323,31 +322,6 @@ export function AlertNotification({
                   </div>
                 </div>
               </div>
-
-              <details className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-gray-900">
-                  <BookOpen className="h-4 w-4 text-indigo-600" />
-                  Bằng chứng đã truy xuất ({recommendation.evidence.length})
-                </summary>
-                <div className="mt-3 space-y-2">
-                  {recommendation.evidence.map((source) => (
-                    <div
-                      key={source.id}
-                      className="rounded-lg bg-white p-3 text-xs text-gray-700"
-                    >
-                      <p className="font-semibold text-gray-900">
-                        {source.label}
-                      </p>
-                      <p className="mt-1">
-                        Trang {source.pages} •{" "}
-                        {source.evidence === "direct"
-                          ? "Bằng chứng trực tiếp/theo giống"
-                          : "Khung bằng chứng chung"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </details>
 
               <p className="text-xs leading-relaxed text-gray-500">
                 Khuyến nghị hỗ trợ quyết định, không thay thế kiểm tra tại ruộng
