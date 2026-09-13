@@ -25,6 +25,7 @@ import { getUserPoints } from "../../lib/community/leaderboard.service";
 import { getUserFollowStats } from "../../lib/follow/follow.service";
 import type { FollowStats } from "../../lib/follow/types";
 import { useAuth } from "../../contexts/AuthContext";
+import { FarmerFarmingProfile } from "./FarmerFarmingProfile";
 
 interface UserProfileModalProps {
   username: string;
@@ -274,6 +275,11 @@ export function UserProfileModal({
                     </p>
                   </div>
                 </div>
+              </div>
+
+              {/* Farmer Farming Profile Summary (if farmer or has farming info) */}
+              <div className="mb-4">
+                <FarmerFarmingProfile userProfile={profile} editable={false} />
               </div>
 
               {/* Activity Section */}

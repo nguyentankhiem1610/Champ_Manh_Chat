@@ -58,6 +58,23 @@ export interface ResetPasswordData {
 export interface UpdateProfileData {
     phone_number?: string;
     organization_id?: string | null;
+    full_name?: string | null;
+    farm_address?: string | null;
+    crop_type?: string | null;
+    farm_area?: number | null;
+    gps_lat?: number | null;
+    gps_lng?: number | null;
+    gps_location_name?: string | null;
+    farming_model?: string | null;
+    farming_model_other?: string | null;
+    rice_variety?: string | null;
+    rice_variety_other?: string | null;
+    sowing_date?: string | null;
+    crop_season?: string | null;
+    crop_season_other?: string | null;
+    growth_stage?: string | null;
+    expected_yield?: number | null;
+    current_salinity?: number | null;
 }
 
 // Authentication state

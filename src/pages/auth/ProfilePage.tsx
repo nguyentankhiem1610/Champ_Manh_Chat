@@ -19,6 +19,7 @@ import {
   Users as UsersIcon,
   UserCheck,
   Settings,
+  MapPin,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { uploadAvatar, deleteAvatar } from "../../lib/auth/auth.service";
@@ -38,6 +39,7 @@ import { getUserFollowStats } from "../../lib/follow/follow.service";
 import type { FollowStats } from "../../lib/follow/types";
 import { FollowersList } from "../../app/components/FollowersList";
 import { BusinessLinksSection } from "../../app/components/BusinessLinksSection";
+import { FarmerFarmingProfile } from "../../app/components/FarmerFarmingProfile";
 
 interface ProfilePageProps {
   onNavigate?: (page: string) => void;
@@ -345,6 +347,21 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
 
           {/* Profile Info */}
           <div className="space-y-4">
+            {/* Full name (if exists) */}
+            {profile.full_name && (
+              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                <div className="flex-shrink-0 w-8 h-8 bg-white rounded flex items-center justify-center">
+                  <User className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500">Họ và tên</p>
+                  <p className="text-base font-semibold text-gray-900">
+                    {profile.full_name}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Username */}
             <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
               <div className="flex-shrink-0 w-8 h-8 bg-white rounded flex items-center justify-center">
@@ -370,6 +387,21 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
                 </p>
               </div>
             </div>
+
+            {/* Farm Address */}
+            {profile.farm_address && (
+              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                <div className="flex-shrink-0 w-8 h-8 bg-white rounded flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-500">Địa chỉ sản xuất</p>
+                  <p className="text-base font-medium text-gray-900">
+                    {profile.farm_address}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Role */}
             <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
@@ -443,6 +475,12 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
             </button>
           </div>
         </div>
+
+        {/* Farmer Farming Profile Card (Thẻ 17 - Thông tin canh tác) */}
+        <FarmerFarmingProfile
+          userProfile={profile}
+          onUpdated={refreshProfile}
+        />
 
         {/* Badges Section */}
         {profile?.id && (
