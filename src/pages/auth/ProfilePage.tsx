@@ -413,8 +413,8 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
                 <div className="mt-1">
                   <span
                     className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${profile.role === "farmer"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-blue-100 text-blue-700"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-blue-100 text-blue-700"
                       }`}
                   >
                     {profile.role === "farmer" ? "Nông dân" : "Tổ chức"}
@@ -475,8 +475,6 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
             </button>
           </div>
         </div>
-
-        {/* Farmer Farming Profile Card (Thẻ 17 - Thông tin canh tác) */}
         <FarmerFarmingProfile
           userProfile={profile}
           onUpdated={refreshProfile}
@@ -506,8 +504,8 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
             <button
               onClick={() => setActiveTab("posts")}
               className={`flex items-center gap-2 px-4 py-2 font-medium text-sm transition-colors ${activeTab === "posts"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-600 hover:text-gray-900"
                 }`}
             >
               <FileText className="w-4 h-4" />
@@ -516,8 +514,8 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
             <button
               onClick={() => setActiveTab("shared")}
               className={`flex items-center gap-2 px-4 py-2 font-medium text-sm transition-colors ${activeTab === "shared"
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
+                ? "text-blue-600 border-b-2 border-blue-600"
+                : "text-gray-600 hover:text-gray-900"
                 }`}
             >
               <Share2 className="w-4 h-4" />

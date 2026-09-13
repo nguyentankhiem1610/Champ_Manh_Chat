@@ -262,9 +262,6 @@ export function FarmerFarmingProfile({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="bg-emerald-500/40 text-emerald-100 text-xs font-semibold px-2 py-0.5 rounded-full border border-emerald-300/30">
-                  Thẻ 17
-                </span>
                 <h3 className="text-lg font-bold">Thông tin sản xuất & Canh tác</h3>
               </div>
               <p className="text-emerald-100/90 text-xs mt-0.5">
@@ -530,13 +527,12 @@ export function FarmerFarmingProfile({
                       return (
                         <div
                           key={stage.id}
-                          className={`flex flex-col items-center text-center p-1.5 rounded-lg transition-all ${
-                            isCurrent
+                          className={`flex flex-col items-center text-center p-1.5 rounded-lg transition-all ${isCurrent
                               ? "bg-emerald-600 text-white font-bold shadow-sm scale-105"
                               : isPast
-                              ? "bg-emerald-100 text-emerald-900 font-medium"
-                              : "bg-white text-gray-400"
-                          }`}
+                                ? "bg-emerald-100 text-emerald-900 font-medium"
+                                : "bg-white text-gray-400"
+                            }`}
                         >
                           <span className="text-base mb-0.5">{stage.icon}</span>
                           <span className="text-[10px] leading-tight line-clamp-1">
@@ -634,11 +630,10 @@ export function FarmerFarmingProfile({
                 {["Lúa", "Khác"].map((c) => (
                   <label
                     key={c}
-                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-medium cursor-pointer transition-colors ${
-                      cropType === c
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-medium cursor-pointer transition-colors ${cropType === c
                         ? "bg-emerald-50 border-emerald-500 text-emerald-800"
                         : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -734,11 +729,10 @@ export function FarmerFarmingProfile({
                 {FARMING_MODELS.map((model) => (
                   <label
                     key={model}
-                    className={`flex items-start gap-3 p-2.5 rounded-lg border text-sm cursor-pointer transition-colors ${
-                      farmingModel === model
+                    className={`flex items-start gap-3 p-2.5 rounded-lg border text-sm cursor-pointer transition-colors ${farmingModel === model
                         ? "bg-emerald-50 border-emerald-500 text-emerald-950 font-medium"
                         : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -796,11 +790,10 @@ export function FarmerFarmingProfile({
                       key={val}
                       type="button"
                       onClick={() => setCurrentSalinity(String(val))}
-                      className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${
-                        currentSalinity === String(val)
+                      className={`px-2 py-0.5 rounded text-xs font-medium border transition-colors ${currentSalinity === String(val)
                           ? "bg-blue-600 text-white border-blue-600"
                           : "bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200"
-                      }`}
+                        }`}
                     >
                       {val} ‰
                     </button>
@@ -828,11 +821,10 @@ export function FarmerFarmingProfile({
                     key={v}
                     type="button"
                     onClick={() => setRiceVariety(v)}
-                    className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
-                      riceVariety === v
+                    className={`px-3.5 py-1.5 rounded-lg border text-xs font-semibold transition-all ${riceVariety === v
                         ? "bg-amber-600 border-amber-600 text-white shadow-sm"
                         : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     {v}
                   </button>
@@ -903,18 +895,16 @@ export function FarmerFarmingProfile({
                       key={stg.id}
                       type="button"
                       onClick={() => setGrowthStage(stg.id)}
-                      className={`flex flex-col items-center p-2.5 rounded-xl border text-center transition-all ${
-                        isSelected
+                      className={`flex flex-col items-center p-2.5 rounded-xl border text-center transition-all ${isSelected
                           ? "bg-emerald-600 border-emerald-600 text-white font-bold shadow-md ring-2 ring-emerald-300"
                           : "bg-white border-gray-200 text-gray-700 hover:border-emerald-300 hover:bg-emerald-50/50"
-                      }`}
+                        }`}
                     >
                       <span className="text-xl mb-1">{stg.icon}</span>
                       <span className="text-xs">{stg.label}</span>
                       <span
-                        className={`text-[10px] mt-0.5 ${
-                          isSelected ? "text-emerald-100" : "text-gray-400"
-                        }`}
+                        className={`text-[10px] mt-0.5 ${isSelected ? "text-emerald-100" : "text-gray-400"
+                          }`}
                       >
                         {stg.days}
                       </span>
