@@ -108,10 +108,23 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [greeting, setGreeting] = useState(getGreeting());
   const [currentSalinity, setCurrentSalinity] = useState<number | null>(null);
+  const [latestSalinity, setLatestSalinity] = useState<number | null>(null);
   const [latestDate, setLatestDate] = useState<string | null>(null);
   const [latestStation, setLatestStation] = useState<string | null>(null);
   const [province, setProvince] = useState<string>("An Giang");
   const [salinityLoading, setSalinityLoading] = useState(true);
+
+  const hasFieldSalinity =
+    profile?.current_salinity !== null &&
+    profile?.current_salinity !== undefined &&
+    Number.isFinite(Number(profile.current_salinity));
+  const recommendationSalinity = hasFieldSalinity
+    ? Number(profile?.current_salinity)
+    : latestSalinity ?? currentSalinity;
+  const recommendationVariety =
+    profile?.rice_variety === "Khác"
+      ? profile.rice_variety_other || profile.rice_variety
+      : profile?.rice_variety;
 
   // Update clock every minute (for mobile layout)
   useEffect(() => {
@@ -143,6 +156,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
 
       if (result.averageSalinity !== null) {
         setCurrentSalinity(result.averageSalinity);
+        setLatestSalinity(result.latestSalinity ?? result.averageSalinity);
         setLatestDate(result.latestDate || null);
         setLatestStation(result.latestStation || null);
       } else {
@@ -151,12 +165,14 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           `No salinity data found for ${selectedProvince} in current month`,
         );
         setCurrentSalinity(null);
+        setLatestSalinity(null);
         setLatestDate(null);
         setLatestStation(null);
       }
     } catch (error) {
       console.error("Error loading salinity data:", error);
       setCurrentSalinity(null);
+      setLatestSalinity(null);
       setLatestDate(null);
       setLatestStation(null);
     } finally {
@@ -243,9 +259,14 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         {/* Alert Notification - Fixed position */}
         <AlertNotification
           province={province}
-          salinity={currentSalinity}
-          latestDate={latestDate}
-          latestStation={latestStation}
+          salinity={recommendationSalinity}
+          latestDate={hasFieldSalinity ? null : latestDate}
+          latestStation={hasFieldSalinity ? null : latestStation}
+          salinitySource={hasFieldSalinity ? "field" : "regional_forecast"}
+          riceVariety={recommendationVariety}
+          growthStage={profile?.growth_stage}
+          sowingDate={profile?.sowing_date}
+          onViewDetails={() => onNavigate?.("salinity")}
         />
 
         {/* Background Image - Cập nhật để fill full chiều dài màn hình */}
@@ -578,9 +599,14 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       {/* Alert Notification - Fixed position */}
       <AlertNotification
         province={province}
-        salinity={currentSalinity}
-        latestDate={latestDate}
-        latestStation={latestStation}
+        salinity={recommendationSalinity}
+        latestDate={hasFieldSalinity ? null : latestDate}
+        latestStation={hasFieldSalinity ? null : latestStation}
+        salinitySource={hasFieldSalinity ? "field" : "regional_forecast"}
+        riceVariety={recommendationVariety}
+        growthStage={profile?.growth_stage}
+        sowingDate={profile?.sowing_date}
+        onViewDetails={() => onNavigate?.("salinity")}
       />
 
       <div className="max-w-7xl mx-auto px-4 py-8">

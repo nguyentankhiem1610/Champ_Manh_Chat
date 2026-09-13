@@ -12,6 +12,15 @@ export interface SalinityAverageResult {
   error?: string;
 }
 
+export interface CurrentMonthSalinityResult {
+  averageSalinity: number | null;
+  latestSalinity: number | null;
+  latestDate?: string;
+  latestStation?: string;
+  dataCount: number;
+  error?: string;
+}
+
 /**
  * Fetch average salinity for a specific province and year
  * @param province Province name (e.g., "An Giang")
@@ -174,7 +183,9 @@ export async function getCurrentSalinity(province: string) {
  * @param province Province name
  * @returns Average salinity for current month
  */
-export async function getCurrentMonthSalinity(province: string) {
+export async function getCurrentMonthSalinity(
+  province: string,
+): Promise<CurrentMonthSalinityResult> {
   try {
     const now = new Date();
     const currentYear = now.getFullYear();

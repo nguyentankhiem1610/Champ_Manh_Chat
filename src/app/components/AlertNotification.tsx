@@ -1,228 +1,383 @@
-import { useState, useEffect } from "react";
-import { Bell, X, Droplets } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Bell,
+  BookOpen,
+  CheckCircle2,
+  Clock3,
+  Droplets,
+  Info,
+  MapPin,
+  ShieldAlert,
+  Sparkles,
+  Sprout,
+  TriangleAlert,
+  X,
+} from "lucide-react";
+import {
+  buildRiceRagRecommendation,
+  type RecommendationRisk,
+} from "../../lib/salinity/rag-recommendation.service";
 
 interface AlertNotificationProps {
   province: string;
   salinity: number | null;
   latestDate?: string | null;
   latestStation?: string | null;
+  salinitySource?: "field" | "regional_forecast";
+  riceVariety?: string | null;
+  growthStage?: string | null;
+  sowingDate?: string | null;
+  onViewDetails?: () => void;
+}
+interface RiskStyle {
+  button: string;
+  header: string;
+  panel: string;
+  badge: string;
+  dot: string;
 }
 
-interface SalinitySolution {
-  level: "safe" | "warning" | "danger";
-  color: string;
-  iconColor: string;
-  title: string;
-  message: string;
-  solutions: string[];
-}
-
-const getSalinitySolutions = (
-  salinity: number | null,
-  province: string,
-): SalinitySolution | null => {
-  if (salinity === null) return null;
-
-  // Ngưỡng độ mặn (g/l)
-  // < 4: An toàn
-  // 4-8: Cảnh báo
-  // > 8: Nguy hiểm
-
-  if (salinity < 4) {
-    // Không có cảnh báo
-    return null;
-  } else if (salinity >= 4 && salinity < 8) {
-    // Cảnh báo vừa
-    return {
-      level: "warning",
-      color: "bg-yellow-50 border-yellow-200 text-yellow-800",
-      iconColor: "text-yellow-600",
-      title: `Cảnh báo độ mặn vừa tại ${province}`,
-      message: `Độ mặn hiện tại đạt ${salinity} g/l, đang ở mức cảnh báo. Cần theo dõi và có biện pháp phòng ngừa.`,
-      solutions: [
-        "Giảm lượng nước tưới trong thời gian này",
-        "Chọn giống cây trồng chịu mặn như lúa OM18, ST25",
-        "Kiểm tra nguồn nước tưới thường xuyên",
-        "Sử dụng hệ thống tưới nhỏ giọt để tiết kiệm nước",
-        "Theo dõi dự báo độ mặn hàng ngày",
-        "Bổ sung phân hữu cơ để cải tạo đất",
-      ],
-    };
-  } else {
-    // Nguy hiểm cao
-    return {
-      level: "danger",
-      color: "bg-red-50 border-red-200 text-red-800",
-      iconColor: "text-red-600",
-      title: `Cảnh báo độ mặn nguy hiểm tại ${province}`,
-      message: `Độ mặn hiện tại đạt ${salinity} g/l, đã vượt ngưỡng an toàn. Cần có hành động khẩn cấp!`,
-      solutions: [
-        "NGỪNG canh tác lúa nước ngay lập tức",
-        "Chuyển đổi sang cây trồng chịu mặn: dừa, tôm, cua",
-        "Tìm nguồn nước ngọt thay thế từ kênh khác",
-        "Xây dựng đập ngăn mặn tạm thời",
-        "Liên hệ Chi cục Thủy lợi địa phương ngay",
-        "Cân nhắc chuyển sang mô hình tôm - lúa luân canh",
-        "Đăng ký hỗ trợ từ chương trình của chính phủ",
-        "Rửa mặn đất bằng nước ngọt nếu có điều kiện",
-      ],
-    };
-  }
+const RISK_STYLES: Record<RecommendationRisk, RiskStyle> = {
+  unknown: {
+    button:
+      "bg-gradient-to-br from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700",
+    header: "bg-gradient-to-r from-sky-600 to-blue-700",
+    panel: "border-sky-200 bg-sky-50 text-sky-950",
+    badge: "bg-sky-100 text-sky-800",
+    dot: "bg-sky-400",
+  },
+  low: {
+    button:
+      "bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700",
+    header: "bg-gradient-to-r from-emerald-600 to-green-700",
+    panel: "border-emerald-200 bg-emerald-50 text-emerald-950",
+    badge: "bg-emerald-100 text-emerald-800",
+    dot: "bg-emerald-400",
+  },
+  moderate: {
+    button:
+      "bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600",
+    header: "bg-gradient-to-r from-amber-500 to-orange-600",
+    panel: "border-amber-200 bg-amber-50 text-amber-950",
+    badge: "bg-amber-100 text-amber-800",
+    dot: "bg-amber-400",
+  },
+  high: {
+    button:
+      "bg-gradient-to-br from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600",
+    header: "bg-gradient-to-r from-orange-600 to-red-600",
+    panel: "border-orange-200 bg-orange-50 text-orange-950",
+    badge: "bg-orange-100 text-orange-800",
+    dot: "bg-orange-500",
+  },
+  critical: {
+    button:
+      "bg-gradient-to-br from-red-600 to-rose-700 hover:from-red-700 hover:to-rose-800",
+    header: "bg-gradient-to-r from-red-600 to-rose-700",
+    panel: "border-red-200 bg-red-50 text-red-950",
+    badge: "bg-red-100 text-red-800",
+    dot: "bg-red-500",
+  },
 };
+
+function formatDate(value?: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
 
 export function AlertNotification({
   province,
   salinity,
   latestDate,
+  latestStation,
+  salinitySource = "regional_forecast",
+  riceVariety,
+  growthStage,
+  sowingDate,
+  onViewDetails,
 }: AlertNotificationProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [alert, setAlert] = useState<SalinitySolution | null>(null);
-
-  useEffect(() => {
-    const solution = getSalinitySolutions(salinity, province);
-    setAlert(solution);
-  }, [salinity, province]);
-
-  // Không hiển thị nút nếu không có cảnh báo
-  if (!alert) {
-    return null;
-  }
+  const recommendation = useMemo(
+    () =>
+      buildRiceRagRecommendation({
+        province,
+        salinity,
+        salinitySource,
+        riceVariety,
+        growthStage,
+        sowingDate,
+        measuredAt: latestDate,
+        station: latestStation,
+      }),
+    [
+      growthStage,
+      latestDate,
+      latestStation,
+      province,
+      riceVariety,
+      salinity,
+      salinitySource,
+      sowingDate,
+    ],
+  );
+  const style = RISK_STYLES[recommendation.risk];
+  const updatedAt = formatDate(latestDate);
+  const isUrgent =
+    recommendation.risk === "high" || recommendation.risk === "critical";
 
   return (
     <>
-      {/* Alert Button - Fixed position on right */}
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
-        className={`fixed top-65 right-4 z-40 ${
-          alert.level === "danger"
-            ? "bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-bounce"
-            : "bg-gradient-to-br from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 animate-pulse"
-        } text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300`}
-        title="Cảnh báo độ mặn"
+        className={`fixed right-4 top-24 z-40 rounded-full p-3 text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl ${style.button} ${
+          isUrgent ? "animate-pulse" : ""
+        }`}
+        title={`Khuyến nghị RAG: ${recommendation.riskLabel}`}
+        aria-label={`Mở khuyến nghị canh tác: ${recommendation.riskLabel}`}
       >
-        <Bell className="w-6 h-6" />
-        <span className="absolute -top-1 -right-1 bg-white text-red-600 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-red-600 shadow-md">
-          !
+        <Bell className="h-6 w-6" fill="currentColor" />
+        <span
+          className={`absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-white px-1 text-[10px] font-black text-white shadow-md ${style.dot}`}
+        >
+          {recommendation.risk === "critical"
+            ? "!!"
+            : recommendation.risk === "high"
+              ? "!"
+              : "AI"}
         </span>
       </button>
 
-      {/* Alert Modal */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-end p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-start justify-end bg-black/50 p-3 backdrop-blur-sm sm:p-4"
           onClick={() => setIsOpen(false)}
+          role="presentation"
         >
-          <div
-            className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col mt-16"
-            onClick={(e) => e.stopPropagation()}
+          <section
+            className="mt-12 flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:mt-16"
+            onClick={(event) => event.stopPropagation()}
+            aria-label="Khuyến nghị thích ứng xâm nhập mặn"
           >
-            {/* Header */}
-            <div
-              className={`${
-                alert.level === "danger"
-                  ? "bg-gradient-to-r from-red-500 to-red-600"
-                  : "bg-gradient-to-r from-yellow-500 to-orange-500"
-              } text-white p-4 flex items-center justify-between`}
+            <header
+              className={`flex items-start justify-between gap-4 p-5 text-white ${style.header}`}
             >
-              <div className="flex items-center gap-3">
-                <Droplets className="w-6 h-6" />
-                <div>
-                  <h2 className="text-lg font-bold">Cảnh báo độ mặn</h2>
-                  <p className="text-sm opacity-90">{province}</p>
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="rounded-xl bg-white/15 p-2.5 ring-1 ring-white/20">
+                  <Sparkles className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/80">
+                    Khuyến nghị có căn cứ từ EUREKA
+                  </p>
+                  <h2 className="text-lg font-bold leading-snug">
+                    {recommendation.title}
+                  </h2>
+                  <p className="mt-1 flex items-center gap-1 text-sm text-white/85">
+                    <MapPin className="h-3.5 w-3.5" /> {province}
+                  </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-white/20 rounded-lg transition-colors"
+                className="rounded-lg p-1.5 transition-colors hover:bg-white/20"
+                aria-label="Đóng"
               >
-                <X className="w-6 h-6" />
+                <X className="h-5 w-5" />
               </button>
-            </div>
+            </header>
 
-            {/* Alert Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-              {/* Main Alert Card */}
-              <div className={`border-2 rounded-xl p-5 mb-6 ${alert.color}`}>
-                <div className="flex gap-4">
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg mb-2">{alert.title}</h3>
-                    <p className="text-sm leading-relaxed mb-3">
-                      {alert.message}
-                    </p>
-
-                    {/* Salinity Details */}
-                    <div className="bg-white/50 rounded-lg p-3 space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Tỉnh/Thành:</span>
-                        <span className="font-bold">{province}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Độ mặn:</span>
-                        <span className="font-bold">{salinity} g/l</span>
-                      </div>
-                      {latestDate && (
-                        <div className="flex justify-between">
-                          <span className="font-medium">Cập nhật:</span>
-                          <span>
-                            {new Date(latestDate).toLocaleDateString("vi-VN", {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            })}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            <div className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                  <Droplets className="mb-2 h-4 w-4 text-blue-600" />
+                  <p className="text-[11px] font-semibold uppercase text-gray-500">
+                    Độ mặn
+                  </p>
+                  <p className="mt-0.5 text-sm font-bold text-gray-950 sm:text-base">
+                    {salinity === null
+                      ? "Chưa có"
+                      : `${salinity.toFixed(2)} g/L`}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                  <Sprout className="mb-2 h-4 w-4 text-emerald-600" />
+                  <p className="text-[11px] font-semibold uppercase text-gray-500">
+                    Giống
+                  </p>
+                  <p className="mt-0.5 truncate text-sm font-bold text-gray-950 sm:text-base">
+                    {recommendation.variety === "unknown"
+                      ? riceVariety || "Chưa rõ"
+                      : recommendation.variety}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                  <Clock3 className="mb-2 h-4 w-4 text-violet-600" />
+                  <p className="text-[11px] font-semibold uppercase text-gray-500">
+                    Giai đoạn
+                  </p>
+                  <p className="mt-0.5 text-sm font-bold leading-tight text-gray-950 sm:text-base">
+                    {recommendation.stageLabel}
+                  </p>
                 </div>
               </div>
 
-              {/* Solutions Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-gray-900 text-lg">
-                    Giải pháp xử lý
-                  </h4>
+              <div className={`rounded-xl border-2 p-4 ${style.panel}`}>
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-bold ${style.badge}`}
+                  >
+                    {recommendation.riskLabel}
+                  </span>
+                  <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-gray-700">
+                    Tin cậy:{" "}
+                    {recommendation.confidence === "high"
+                      ? "cao"
+                      : recommendation.confidence === "medium"
+                        ? "khá"
+                        : "giới hạn"}
+                  </span>
                 </div>
+                <p className="text-sm leading-relaxed">
+                  {recommendation.summary}
+                </p>
+              </div>
 
-                <div className="space-y-3">
-                  {alert.solutions.map((solution, index) => (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 font-bold text-gray-950">
+                  <ShieldAlert className="h-5 w-5 text-red-600" />
+                  Hành động ngay
+                </h3>
+                <div className="space-y-2.5">
+                  {recommendation.immediateActions.map((action, index) => (
                     <div
-                      key={index}
-                      className="flex gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      key={action}
+                      className="flex gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
                     >
-                      <div className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
                         {index + 1}
-                      </div>
-                      <p className="text-sm text-gray-700 leading-relaxed flex-1">
-                        {solution}
+                      </span>
+                      <p className="text-sm leading-relaxed text-gray-800">
+                        {action}
                       </p>
                     </div>
                   ))}
                 </div>
               </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                  <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-emerald-950">
+                    <CheckCircle2 className="h-4 w-4" /> Theo dõi tiếp
+                  </h3>
+                  <ul className="space-y-2 text-sm leading-relaxed text-emerald-900">
+                    {recommendation.monitoringActions.map((action) => (
+                      <li key={action} className="flex gap-2">
+                        <span aria-hidden="true">•</span>
+                        <span>{action}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+                  <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-rose-950">
+                    <TriangleAlert className="h-4 w-4" /> Không nên làm
+                  </h3>
+                  <ul className="space-y-2 text-sm leading-relaxed text-rose-900">
+                    {recommendation.avoidActions.map((action) => (
+                      <li key={action} className="flex gap-2">
+                        <span aria-hidden="true">•</span>
+                        <span>{action}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <div className="flex gap-2 text-sm text-blue-950">
+                  <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold">Chất lượng dữ liệu</p>
+                    <p className="mt-1 leading-relaxed">
+                      {recommendation.dataNote}
+                    </p>
+                    {(updatedAt || latestStation) && (
+                      <p className="mt-2 text-xs text-blue-800">
+                        {updatedAt ? `Cập nhật: ${updatedAt}` : ""}
+                        {updatedAt && latestStation ? " • " : ""}
+                        {latestStation ? `Trạm: ${latestStation}` : ""}
+                      </p>
+                    )}
+                    <p className="mt-2 text-xs font-medium text-blue-800">
+                      {recommendation.confidenceLabel}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <details className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-bold text-gray-900">
+                  <BookOpen className="h-4 w-4 text-indigo-600" />
+                  Bằng chứng đã truy xuất ({recommendation.evidence.length})
+                </summary>
+                <div className="mt-3 space-y-2">
+                  {recommendation.evidence.map((source) => (
+                    <div
+                      key={source.id}
+                      className="rounded-lg bg-white p-3 text-xs text-gray-700"
+                    >
+                      <p className="font-semibold text-gray-900">
+                        {source.label}
+                      </p>
+                      <p className="mt-1">
+                        Trang {source.pages} •{" "}
+                        {source.evidence === "direct"
+                          ? "Bằng chứng trực tiếp/theo giống"
+                          : "Khung bằng chứng chung"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </details>
+
+              <p className="text-xs leading-relaxed text-gray-500">
+                Khuyến nghị hỗ trợ quyết định, không thay thế kiểm tra tại ruộng
+                hoặc tư vấn của cán bộ nông nghiệp trong tình huống thiệt hại
+                nghiêm trọng.
+              </p>
             </div>
 
-            {/* Footer */}
-            <div className="border-t p-4 bg-gray-50 flex gap-3">
+            <footer className="flex gap-3 border-t border-gray-200 bg-gray-50 p-4">
               <button
+                type="button"
                 onClick={() => setIsOpen(false)}
-                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition-colors"
+                className="flex-1 rounded-lg bg-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-300"
               >
                 Đã hiểu
               </button>
-              <button
-                onClick={() => {
-                  // TODO: Navigate to salinity page for more details
-                  setIsOpen(false);
-                }}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-              >
-                Xem chi tiết
-              </button>
-            </div>
-          </div>
+              {onViewDetails && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onViewDetails();
+                  }}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                >
+                  Xem dữ liệu độ mặn
+                </button>
+              )}
+            </footer>
+          </section>
         </div>
       )}
     </>

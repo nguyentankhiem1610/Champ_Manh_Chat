@@ -36,6 +36,7 @@ const RICE_VARIETIES = [
   "Đài Thơm 8",
   "IR4625",
   "IR50404",
+  "ST24",
   "Khác",
 ];
 
